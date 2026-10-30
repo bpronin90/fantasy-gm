@@ -1,0 +1,161 @@
+{
+  "name": "Fantasy GM — Import",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Fantasy GM — Import",
+        "formDescription": "Paste a complete Yahoo roster snapshot JSON. Settings and player identities remain unverified until checked against Yahoo.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Snapshot JSON",
+              "fieldType": "textarea",
+              "fieldName": "snapshot_json",
+              "requiredField": true
+            }
+          ]
+        },
+        "responseMode": "lastNode",
+        "options": {
+          "appendAttribution": false,
+          "path": "fantasy-gm-import",
+          "respondWithOptions": {
+            "values": {
+              "formSubmittedText": "Snapshot validated and saved. Run Fantasy GM — Research Pack through Codex."
+            }
+          }
+        }
+      },
+      "id": "797f6a6f-42e1-4ecc-9b32-b5078450ad96",
+      "name": "Roster JSON Form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "REPLACE_WITH_SUBMISSIONS_TABLE_ID",
+          "cachedResultName": "Fantasy GM Submissions"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "raw_json": "={{ JSON.stringify($json) }}"
+          },
+          "schema": [
+            {
+              "id": "raw_json",
+              "displayName": "raw_json",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "74ddd117-a68e-43d1-93ad-15be321bfd75",
+      "name": "Preserve Raw Submission",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        272,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $('Roster JSON Form').first().json.snapshot_json;\nif (typeof raw !== 'string' || raw.length > 500000) throw new Error('snapshot_json must be JSON text under 500 KB');\nlet s; try { s=JSON.parse(raw); } catch { throw new Error('Invalid JSON'); }\nconst fail=m=>{throw new Error(m)};\nconst obj=x=>x && typeof x==='object' && !Array.isArray(x);\nif(!obj(s)) fail('Snapshot must be an object');\nif(s.schema_version!==1 || s.platform!=='yahoo') fail('schema_version must be 1 and platform yahoo');\nif(typeof s.league_id!=='string'||!s.league_id.trim()) fail('league_id required');\nif(!Number.isInteger(s.season)||s.season<2000||s.season>2100) fail('season required');\nif(!Number.isInteger(s.current_week)||s.current_week<1||s.current_week>18) fail('current_week must be 1..18');\nif(typeof s.is_sample!=='boolean') fail('is_sample boolean required');\nif(typeof s.captured_at!=='string'||!/^\\d{4}-\\d{2}-\\d{2}T/.test(s.captured_at)||!Number.isFinite(Date.parse(s.captured_at))) fail('captured_at ISO timestamp required');\nif(!obj(s.league_settings)||typeof s.league_settings.verified!=='boolean'||typeof s.league_settings.ppr!=='number'||s.league_settings.ppr<0||s.league_settings.ppr>2) fail('league_settings needs ppr and verified');\nconst positions=['QB','RB','WR','TE','K','DEF','DL','LB','DB','DT','DE','CB','S'];\nconst slots=[...positions,'FLEX','SUPER_FLEX','BN','IR','IR+'];\nconst teams='ARI ATL BAL BUF CAR CHI CIN CLE DAL DEN DET GB HOU IND JAX KC LAC LAR LV MIA MIN NE NO NYG NYJ PHI PIT SEA SF TB TEN WAS FA'.split(' ');\nif(!obj(s.league_settings.roster_slots)||!Object.keys(s.league_settings.roster_slots).length) fail('roster_slots required');\nfor(const [k,v] of Object.entries(s.league_settings.roster_slots)) if(!slots.includes(k)||!Number.isInteger(v)||v<0||v>40) fail('Invalid roster slot '+k);\nif(!Array.isArray(s.roster)||!s.roster.length||s.roster.length>100||!Array.isArray(s.waiver_players)||s.waiver_players.length>1000) fail('roster and waiver_players arrays required');\nconst seen=new Set();\nfor(const [label,players] of [['roster',s.roster],['waiver_players',s.waiver_players]]) for(const p of players){\n if(!obj(p)||typeof p.name!=='string'||p.name.trim().length<2||p.name.length>100||!/[\\p{L}]/u.test(p.name)||/[<>\\x00-\\x1f]/.test(p.name)) fail(label+': invalid player name');\n if(!Array.isArray(p.positions)||!p.positions.length||p.positions.some(x=>!positions.includes(x))) fail(p.name+': invalid positions');\n if(!teams.includes(p.team)) fail(p.name+': invalid team abbreviation');\n if(p.opponent!==undefined&&p.opponent!==null&&p.opponent!=='BYE'&&!teams.filter(t=>t!=='FA').includes(p.opponent)) fail(p.name+': invalid opponent');\n if(label==='roster'&&!slots.includes(p.slot)) fail(p.name+': slot required');\n if(label==='roster'&&!['BN','IR','IR+','FLEX','SUPER_FLEX'].includes(p.slot)&&!p.positions.includes(p.slot)) fail(p.name+': slot incompatible with positions');\n if(label==='roster'&&p.slot==='FLEX'&&!p.positions.some(x=>['RB','WR','TE'].includes(x))) fail(p.name+': FLEX incompatible');\n if(label==='roster'&&p.slot==='SUPER_FLEX'&&!p.positions.some(x=>['QB','RB','WR','TE'].includes(x))) fail(p.name+': SUPER_FLEX incompatible');\n const key=(p.player_id||p.name.trim().toLowerCase())+'|'+p.team;\n if(seen.has(key)) fail('Duplicate player across roster/waivers: '+p.name); seen.add(key);\n}\nreturn [{json:{snapshot_json:JSON.stringify(s),league_id:s.league_id,is_sample:s.is_sample,captured_at:s.captured_at}}];"
+      },
+      "id": "4104a943-7590-4d57-8fae-1530a3b5a4a9",
+      "name": "Validate Snapshot",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        496,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "REPLACE_WITH_SNAPSHOTS_TABLE_ID",
+          "cachedResultName": "Fantasy GM Snapshots"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": null
+        },
+        "options": {}
+      },
+      "id": "eeb8beb2-56e9-4fb4-ad8e-7474c8d3a93c",
+      "name": "Save Snapshot",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        128
+      ]
+    }
+  ],
+  "connections": {
+    "Roster JSON Form": {
+      "main": [
+        [
+          {
+            "node": "Preserve Raw Submission",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preserve Raw Submission": {
+      "main": [
+        [
+          {
+            "node": "Validate Snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Snapshot": {
+      "main": [
+        [
+          {
+            "node": "Save Snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true,
+    "binaryMode": "separate"
+  },
+  "nodeGroups": [
+    {
+      "id": "7778bcb7-004c-437f-a2f2-b98018901f34",
+      "name": "Validate and persist",
+      "nodeNames": [
+        "Preserve Raw Submission",
+        "Validate Snapshot",
+        "Save Snapshot"
+      ],
+      "description": "Preserve the raw submission, validate its structure, and save a complete snapshot."
+    }
+  ],
+  "active": false,
+  "pinData": {}
+}

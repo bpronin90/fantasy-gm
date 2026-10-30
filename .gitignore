@@ -1,0 +1,66 @@
+# Secrets and authentication
+.env
+.env.*
+*.env
+credentials*
+secrets*
+*token*
+*.pem
+*.key
+*.p12
+*.pfx
+.npmrc
+.netrc
+# Runtime and personal data: only reviewed synthetic samples belong in Git
+/data/*
+!/data/samples/
+/data/samples/*
+!/data/samples/sample-roster.json
+*roster*.json
+!/data/samples/sample-roster.json
+*league*.json
+*snapshot*.json
+*research-pack-output*
+exports/
+backups/
+private/
+local/
+runtime/
+.n8n/
+*.sqlite*
+*.db
+*.log
+*.csv
+*.tsv
+*.zip
+*.gz
+*.bak
+*.tmp
+tmp/
+logs/
+node_modules/
+dist/
+coverage/
+__pycache__/
+*.pyc
+.venv/
+.DS_Store
+.idea/
+.vscode/
+
+# Local-only agent layer, restored from the private local-layer backup.
+# Tracked on purpose: AGENTS.md and CLAUDE.md (minimal public instructions that
+# fresh and cloud checkouts need), .claude/settings.json and .claude/hooks/ (the
+# guard hook), scripts/check-scope.sh and scripts/test-governance-helpers.sh.
+/AGENTS.override.md
+/CLAUDE.local.md
+/CODEX.md
+/GEMINI.md
+/.claude/*
+!/.claude/settings.json
+!/.claude/hooks/
+/.claude/hooks/*
+!/.claude/hooks/guard-bash.py
+/.codex/
+/.agents/
+/.agent-workflows/

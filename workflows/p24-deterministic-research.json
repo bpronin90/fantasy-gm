@@ -1,0 +1,153 @@
+{
+  "name": "Fantasy GM P2.4 Deterministic Research (isolated draft)",
+  "active": false,
+  "nodes": [
+    {
+      "id": "p24-research-timer",
+      "name": "Research Timer",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "disabled": true,
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "p24-research-worker",
+      "name": "Research Worker",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        300,
+        0
+      ],
+      "parameters": {
+        "command": "cd /opt/fantasy-gm && python3 -m src.fantasy_gm.automation --ledger /var/lib/fantasy-gm/decisions.sqlite --job /var/lib/fantasy-gm/research-job.json",
+        "executeOnce": true
+      }
+    },
+    {
+      "id": "p24-pregame-timer",
+      "name": "Pregame Timer",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        200
+      ],
+      "disabled": true,
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "p24-pregame-worker",
+      "name": "Pregame Worker",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        300,
+        200
+      ],
+      "parameters": {
+        "command": "cd /opt/fantasy-gm && python3 -m src.fantasy_gm.automation --ledger /var/lib/fantasy-gm/decisions.sqlite --job /var/lib/fantasy-gm/pregame-job.json",
+        "executeOnce": true
+      }
+    },
+    {
+      "id": "p24-postgame-timer",
+      "name": "Postgame Timer",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        400
+      ],
+      "disabled": true,
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "p24-postgame-worker",
+      "name": "Postgame Worker",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        300,
+        400
+      ],
+      "parameters": {
+        "command": "cd /opt/fantasy-gm && python3 -m src.fantasy_gm.automation --ledger /var/lib/fantasy-gm/decisions.sqlite --job /var/lib/fantasy-gm/postgame-job.json",
+        "executeOnce": true
+      }
+    }
+  ],
+  "connections": {
+    "Research Timer": {
+      "main": [
+        [
+          {
+            "node": "Research Worker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pregame Timer": {
+      "main": [
+        [
+          {
+            "node": "Pregame Worker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgame Timer": {
+      "main": [
+        [
+          {
+            "node": "Postgame Worker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/New_York",
+    "saveDataSuccessExecution": "none",
+    "saveDataErrorExecution": "none"
+  },
+  "pinData": {}
+}

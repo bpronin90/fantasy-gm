@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "platform": "yahoo",
+  "league_id": "sample-league",
+  "season": 2026,
+  "current_week": 8,
+  "captured_at": "2026-10-28T12:00:00Z",
+  "is_sample": true,
+  "league_settings": {
+    "ppr": 1,
+    "verified": false,
+    "roster_slots": {
+      "QB": 1,
+      "RB": 2,
+      "WR": 2,
+      "TE": 1,
+      "FLEX": 1,
+      "K": 1,
+      "DEF": 1,
+      "BN": 6
+    }
+  },
+  "roster": [
+    {
+      "name": "Sample Quarterback",
+      "positions": [
+        "QB"
+      ],
+      "team": "BUF",
+      "slot": "QB",
+      "opponent": null
+    },
+    {
+      "name": "Sample Receiver",
+      "positions": [
+        "WR"
+      ],
+      "team": "MIN",
+      "slot": "WR",
+      "opponent": null
+    }
+  ],
+  "waiver_players": [
+    {
+      "name": "Sample Running Back",
+      "positions": [
+        "RB"
+      ],
+      "team": "SEA",
+      "opponent": null
+    }
+  ]
+}
